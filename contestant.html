@@ -559,11 +559,15 @@ function computeQuestionTimer(round) {
 
   let rem = Number(round.qTimerRemaining || 0);
   const running = !!round.qTimerRunning;
+  const startedAt = parseIsoTimeMs(round.qTimerStartedAt);
   const snapshotAt = getSnapshotTimeMs(round);
 
-  if (running && snapshotAt > 0) {
-    const elapsed = Math.floor((Date.now() - snapshotAt) / 1000);
-    rem = Math.max(0, rem - Math.max(0, elapsed));
+  if (running) {
+    const base = startedAt || snapshotAt;
+    if (base > 0) {
+      const elapsed = Math.floor((Date.now() - base) / 1000);
+      rem = Math.max(0, rem - Math.max(0, elapsed));
+    }
   }
 
   return rem;
@@ -574,11 +578,15 @@ function computeMainTimer(round) {
 
   let rem = Number(round.mainTimerRemaining || 0);
   const running = !!round.mainTimerRunning;
+  const startedAt = parseIsoTimeMs(round.mainTimerStartedAt);
   const snapshotAt = getSnapshotTimeMs(round);
 
-  if (running && snapshotAt > 0) {
-    const elapsed = Math.floor((Date.now() - snapshotAt) / 1000);
-    rem = Math.max(0, rem - Math.max(0, elapsed));
+  if (running) {
+    const base = startedAt || snapshotAt;
+    if (base > 0) {
+      const elapsed = Math.floor((Date.now() - base) / 1000);
+      rem = Math.max(0, rem - Math.max(0, elapsed));
+    }
   }
 
   return rem;
