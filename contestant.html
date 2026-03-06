@@ -362,7 +362,7 @@
 <script>
 const GOOGLE_SHEETS_CONFIG = {
   enabled: true,
-  webAppUrl: 'https://script.google.com/macros/s/AKfycbwVnsmWoMjLHbf04LhDSnptLJmQnAvsCz_S3WRxghM2HK4BvlPhEzih1nMof__kNxQq/exec'
+  webAppUrl: 'https://script.google.com/macros/s/AKfycbxTjGxlMoQoYNliyHYl3mny9sTJcyyqOV5aZwIzjslqwtEpbwIA2S3QUASv88Vw5GmJ/exec'
 };
 
 let liveState = null;
@@ -371,6 +371,7 @@ let qTimerTickHandle = null;
 let wheelTimerTickHandle = null;
 let audioCtx = null;
 let lastPlayedSoundEventKey = '';
+let serverClockOffsetMs = 0; // localTime - serverTime
 const LIVE_FILTER = (() => {
   const params = new URLSearchParams(window.location.search || '');
   return {
@@ -510,6 +511,10 @@ function parseIsoTimeMs(value) {
   return Number.isFinite(ms) ? ms : 0;
 }
 
+function getNowMs() {
+  return Date.now() - serverClockOffsetMs;
+}
+
 function getSnapshotTimeMs(round) {
   if (!round) return 0;
   return parseIsoTimeMs(round.timestamp) || parseIsoTimeMs(round.updatedAt);
@@ -565,7 +570,7 @@ function computeQuestionTimer(round) {
   if (running) {
     const base = startedAt || snapshotAt;
     if (base > 0) {
-      const elapsed = Math.floor((Date.now() - base) / 1000);
+      const elapsed = Math.floor((getNowMs() - base) / 1000);
       rem = Math.max(0, rem - Math.max(0, elapsed));
     }
   }
@@ -584,7 +589,7 @@ function computeMainTimer(round) {
   if (running) {
     const base = startedAt || snapshotAt;
     if (base > 0) {
-      const elapsed = Math.floor((Date.now() - base) / 1000);
+      const elapsed = Math.floor((getNowMs() - base) / 1000);
       rem = Math.max(0, rem - Math.max(0, elapsed));
     }
   }
@@ -714,6 +719,11 @@ async function pollLive() {
   try {
     const result = await callApi('getLiveState', LIVE_FILTER);
     liveState = result && result.data ? result.data : null;
+
+    if (liveState && liveState.serverTime) {
+      serverClockOffsetMs = Date.now() - parseIsoTimeMs(liveState.serverTime);
+    }
+
     if (liveState) renderLive(liveState);
   } catch (err) {
     const syncText = document.getElementById('syncText');

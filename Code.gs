@@ -308,6 +308,7 @@ function getLiveState_(payload) {
 
   return {
     hasRound: true,
+    serverTime: new Date().toISOString(),
     questions: publicQuestions,
     round: {
       roundId: valueOr_(round.roundId, ''),
