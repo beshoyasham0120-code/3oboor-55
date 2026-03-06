@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تعديل الأسئلة</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #7c3aed;
+    --primary-dark: #5b21b6;
+    --primary-soft: #ede9fe;
+    --cyan: #06b6d4;
+    --pink: #ec4899;
+    --text: #111827;
+    --muted: #6b7280;
+    --line: #ddd6fe;
+    --card: rgba(255,255,255,0.88);
+    --shadow: 0 14px 34px rgba(76,29,149,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    min-height: 100vh;
+    color: var(--text);
+    background:
+      radial-gradient(circle at 12% 15%, #a78bfa 0%, transparent 32%),
+      radial-gradient(circle at 88% 10%, #22d3ee 0%, transparent 28%),
+      radial-gradient(circle at 50% 100%, #f472b6 0%, transparent 24%),
+      linear-gradient(150deg, #f8fafc 0%, #eef2ff 45%, #f5f3ff 100%);
+    padding: 16px;
+  }
+
+  .shell { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+
+  .topbar {
+    background: linear-gradient(120deg, #4c1d95 0%, #7c3aed 45%, #06b6d4 100%);
+    color: white;
+    border-radius: 18px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: var(--shadow);
+    gap: 10px;
+  }
+
+  .topbar-title { font-size: 20px; font-weight: 900; }
+
+  .topbar-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 14px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn.primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+  }
+  .btn.primary:hover { transform: translateY(-1px); }
+
+  .btn.ghost {
+    background: rgba(255,255,255,0.22);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.35);
+  }
+  .btn.ghost:hover { background: rgba(255,255,255,0.32); }
+
+  .card {
+    background: var(--card);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.55);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+  }
+
+  .status {
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  .category {
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 12px;
+    margin-top: 10px;
+    background: rgba(255,255,255,0.8);
+  }
+
+  .category-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .btn-danger {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 12px;
+    background: #fce7f3;
+    color: #be185d;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .btn-danger:hover {
+    background: #be185d;
+    color: white;
+  }
+
+  .category-name {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 15px;
+    font-weight: 800;
+    margin-bottom: 0;
+  }
+
+  .q-row {
+    display: grid;
+    grid-template-columns: 84px 1fr 1fr auto;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .btn-double {
+    border: none;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    background: #ede9fe;
+    color: #5b21b6;
+  }
+
+  .btn-double.active {
+    background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+    color: white;
+  }
+
+  .q-pts,
+  .q-input {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    width: 100%;
+  }
+
+  .q-pts { text-align: center; font-weight: 800; background: #faf5ff; }
+
+  .q-input.answer {
+    border-color: #bae6fd;
+    background: #f0f9ff;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 24px 8px;
+    font-weight: 700;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 22px;
+    left: 50%;
+    transform: translateX(-50%) translateY(90px);
+    background: linear-gradient(135deg, #1f2937, #0f172a);
+    color: white;
+    border-radius: 14px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    transition: transform 0.3s;
+    z-index: 999;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 640px) {
+    .topbar { flex-direction: column; align-items: stretch; }
+    .topbar-title { text-align: center; font-size: 18px; }
+    .topbar-actions { justify-content: center; }
+    .q-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="topbar-title">✏️ تعديل الأسئلة</div>
+      <div class="topbar-actions">
+        <button class="btn ghost" onclick="goToGame()">🏠 العودة للعبة</button>
+        <button class="btn ghost" onclick="addCategory()">➕ إضافة فئة</button>
+        <button class="btn ghost" onclick="loadQuestions()">🔄 إعادة تحميل</button>
+        <button class="btn primary" onclick="saveQuestions()">💾 حفظ في الشيت</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="status" id="statusText">جاري تحميل الأسئلة...</div>
+      <div id="editorRoot"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+<script>
+const GOOGLE_SHEETS_CONFIG = {
+  enabled: true,
+  webAppUrl: 'https://script.google.com/macros/s/AKfycbwVnsmWoMjLHbf04LhDSnptLJmQnAvsCz_S3WRxghM2HK4BvlPhEzih1nMof__kNxQq/exec'
+};
+
+let editorData = { categories: [] };
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+function isReady() {
+  return GOOGLE_SHEETS_CONFIG.enabled && GOOGLE_SHEETS_CONFIG.webAppUrl;
+}
+
+function buildUrl(api) {
+  const sep = GOOGLE_SHEETS_CONFIG.webAppUrl.includes('?') ? '&' : '?';
+  return `${GOOGLE_SHEETS_CONFIG.webAppUrl}${sep}api=${encodeURIComponent(api)}`;
+}
+
+async function callApi(api, payload = {}) {
+  if (!isReady()) throw new Error('Google Sheets URL غير مضبوط');
+  const response = await fetch(buildUrl(api), {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ api, action: api, payload, ...payload })
+  });
+
+  if (!response.ok) throw new Error('فشل الاتصال بـ Apps Script');
+  const text = await response.text();
+  let parsed = {};
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error('الرد ليس JSON');
+  }
+  if (parsed && parsed.ok === false) throw new Error(parsed.error || 'Apps Script Error');
+  return parsed;
+}
+
+function escHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function renderEditor() {
+  const root = document.getElementById('editorRoot');
+  const categories = editorData.categories || [];
+
+  if (!categories.length) {
+    root.innerHTML = '<div class="empty">لا توجد أسئلة في الشيت</div>';
+    return;
+  }
+
+  let html = '';
+  categories.forEach((cat, ci) => {
+    html += `<div class="category">`;
+    html += `<div class="category-head">`;
+    html += `<input class="category-name" id="cat_${ci}" value="${escHtml(cat.name)}" placeholder="اسم الفئة">`;
+    html += `<button class="btn-danger" onclick="deleteCategory(${ci})">🗑 حذف الفئة</button>`;
+    html += `</div>`;
+
+    (cat.questions || []).forEach((q, qi) => {
+      html += `<div class="q-row">`;
+      html += `<input class="q-pts" id="pts_${ci}_${qi}" value="${Number(q.pts || 0)}" type="number" min="1">`;
+      html += `<input class="q-input" id="q_${ci}_${qi}" value="${escHtml(q.text)}" placeholder="نص السؤال">`;
+      html += `<input class="q-input answer" id="a_${ci}_${qi}" value="${escHtml(q.answer || '')}" placeholder="الإجابة">`;
+      html += `<button class="btn-double ${q.isDouble ? 'active' : ''}" onclick="setDoubleQuestion(${ci}, ${qi})">${q.isDouble ? '⚡ دابل' : 'تحديد دابل'}</button>`;
+      html += `</div>`;
+    });
+
+    html += `</div>`;
+  });
+
+  root.innerHTML = html;
+}
+
+function collectFromInputs() {
+  const categories = editorData.categories || [];
+
+  categories.forEach((cat, ci) => {
+    const catEl = document.getElementById(`cat_${ci}`);
+    if (catEl) cat.name = catEl.value.trim() || cat.name;
+
+    (cat.questions || []).forEach((q, qi) => {
+      const ptsEl = document.getElementById(`pts_${ci}_${qi}`);
+      const qEl = document.getElementById(`q_${ci}_${qi}`);
+      const aEl = document.getElementById(`a_${ci}_${qi}`);
+
+      if (ptsEl) {
+        const n = Number(ptsEl.value);
+        q.pts = Number.isFinite(n) && n > 0 ? n : q.pts;
+      }
+      if (qEl) q.text = qEl.value.trim() || q.text;
+      q.answer = aEl ? aEl.value.trim() : (q.answer || '');
+      q.isDouble = !!q.isDouble;
+    });
+
+    cat.questions = (cat.questions || []).sort((x, y) => Number(x.pts || 0) - Number(y.pts || 0));
+  });
+}
+
+function clearAllDoubleFlags() {
+  (editorData.categories || []).forEach(cat => {
+    (cat.questions || []).forEach(q => {
+      q.isDouble = false;
+    });
+  });
+}
+
+function setDoubleQuestion(ci, qi) {
+  collectFromInputs();
+  const category = editorData.categories[ci];
+  const question = category && category.questions ? category.questions[qi] : null;
+  if (!question) return;
+
+  const makeDouble = !question.isDouble;
+  clearAllDoubleFlags();
+  if (makeDouble) question.isDouble = true;
+
+  renderEditor();
+  showToast(makeDouble ? '⚡ تم تحديد السؤال الدابل' : 'تم إلغاء السؤال الدابل');
+}
+
+async function loadQuestions() {
+  const status = document.getElementById('statusText');
+  status.textContent = 'جاري تحميل الأسئلة...';
+
+  try {
+    const result = await callApi('getQuestions', {});
+    const questions = result && result.data && Array.isArray(result.data.questions) ? result.data.questions : [];
+    editorData.categories = questions;
+    renderEditor();
+    status.textContent = `تم تحميل ${questions.length} فئة`;
+  } catch (err) {
+    status.textContent = 'فشل تحميل الأسئلة';
+    showToast('❌ ' + (err.message || 'حدث خطأ'));
+  }
+}
+
+async function saveQuestions() {
+  const status = document.getElementById('statusText');
+  collectFromInputs();
+  status.textContent = 'جاري الحفظ في الشيت...';
+
+  try {
+    await callApi('saveQuestions', {
+      timestamp: new Date().toISOString(),
+      questions: editorData.categories
+    });
+    status.textContent = 'تم الحفظ بنجاح في Google Sheets';
+    showToast('✅ تم حفظ التعديلات');
+  } catch (err) {
+    status.textContent = 'فشل الحفظ';
+    showToast('❌ ' + (err.message || 'تعذر الحفظ'));
+  }
+}
+
+function goToGame() {
+  window.location.href = 'index.html';
+}
+
+function addCategory() {
+  collectFromInputs();
+  const nextNumber = (editorData.categories || []).length + 1;
+  const newCategory = {
+    name: `فئة جديدة ${nextNumber}`,
+    questions: [
+      { pts: 5, text: '', answer: '', isDouble: false },
+      { pts: 10, text: '', answer: '', isDouble: false },
+      { pts: 20, text: '', answer: '', isDouble: false },
+      { pts: 40, text: '', answer: '', isDouble: false }
+    ]
+  };
+
+  editorData.categories.push(newCategory);
+  renderEditor();
+  showToast('✅ تم إضافة فئة جديدة');
+}
+
+function deleteCategory(index) {
+  collectFromInputs();
+  const categories = editorData.categories || [];
+  const cat = categories[index];
+  if (!cat) return;
+
+  const ok = confirm(`هل تريد حذف الفئة "${cat.name}"؟`);
+  if (!ok) return;
+
+  categories.splice(index, 1);
+  editorData.categories = categories;
+  renderEditor();
+  showToast('🗑 تم حذف الفئة');
+}
+
+loadQuestions();
+</script>
+</body>
+</html>

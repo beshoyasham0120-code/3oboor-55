@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>شاشة المتسابق</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #7c3aed;
+    --primary-dark: #5b21b6;
+    --accent: #06b6d4;
+    --danger: #dc2626;
+    --text: #111827;
+    --muted: #6b7280;
+    --card: rgba(255,255,255,0.88);
+    --line: rgba(255,255,255,0.55);
+    --shadow: 0 14px 34px rgba(76,29,149,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 12% 15%, #a78bfa 0%, transparent 32%),
+      radial-gradient(circle at 88% 10%, #22d3ee 0%, transparent 28%),
+      radial-gradient(circle at 50% 100%, #f472b6 0%, transparent 24%),
+      linear-gradient(150deg, #f8fafc 0%, #eef2ff 45%, #f5f3ff 100%);
+    padding: 14px;
+  }
+
+  .shell { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 12px; }
+
+  .header {
+    background: linear-gradient(120deg, #4c1d95 0%, #7c3aed 45%, #06b6d4 100%);
+    color: white;
+    border-radius: 18px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .title { font-size: 22px; font-weight: 900; }
+  .host { font-size: 13px; opacity: 0.9; }
+
+  .pill {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(8px);
+  }
+
+  .wheel-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .wheel-title {
+    font-size: 16px;
+    font-weight: 900;
+    color: var(--primary-dark);
+  }
+
+  .wheel-timer {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border-radius: 999px;
+    min-width: 120px;
+    text-align: center;
+    padding: 10px 14px;
+    font-size: 28px;
+    font-weight: 900;
+    line-height: 1;
+  }
+
+  .wheel-timer.urgent { background: linear-gradient(135deg, #ef4444, var(--danger)); }
+
+  .scores {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .score-box {
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+    background: rgba(255,255,255,0.8);
+    border: 1px solid #ddd6fe;
+  }
+
+  .score-name { font-size: 14px; font-weight: 800; color: var(--muted); }
+  .score-val { font-size: 36px; font-weight: 900; line-height: 1.1; margin-top: 4px; }
+  .score1 { color: #ec4899; }
+  .score2 { color: var(--primary); }
+
+  .active-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15,23,42,0.45);
+    backdrop-filter: blur(4px);
+    z-index: 300;
+  }
+
+  .active-overlay.show { display: block; }
+
+  .active-wrap {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(92vw, 760px);
+    z-index: 310;
+    box-shadow: 0 24px 60px rgba(2,6,23,0.35);
+  }
+
+  .active-wrap.show { display: block; }
+
+  .active-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .active-cat {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--primary-dark);
+  }
+
+  .active-pts {
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    color: white;
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 14px;
+    font-weight: 900;
+    white-space: nowrap;
+  }
+
+  .q-timer {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border-radius: 999px;
+    min-width: 84px;
+    text-align: center;
+    padding: 8px 12px;
+    font-size: 20px;
+    font-weight: 900;
+  }
+
+  .q-timer.urgent { background: linear-gradient(135deg, #ef4444, var(--danger)); }
+
+  .active-text {
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.6;
+    text-align: center;
+    border-radius: 14px;
+    padding: 16px;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ecfeff 100%);
+    border: 1px solid #ddd6fe;
+  }
+
+  .status {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .categories { display: flex; flex-direction: column; gap: 10px; }
+
+  .cat {
+    border: 1px solid #ddd6fe;
+    border-radius: 14px;
+    padding: 10px;
+    background: rgba(255,255,255,0.84);
+  }
+
+  .cat-name {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--primary-dark);
+    margin-bottom: 8px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .pt {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 8px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 16px;
+    font-weight: 900;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    color: white;
+    cursor: default;
+  }
+
+  .pt.answered {
+    background: #e5e7eb;
+    color: #9ca3af;
+  }
+
+  .winner-wrap {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 600;
+    overflow: hidden;
+    background: linear-gradient(135deg, #7c3aed, #ec4899);
+    color: white;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .winner-wrap.show { display: flex; }
+
+  .winner-content {
+    width: min(92vw, 920px);
+  }
+
+  .winner-title {
+    font-size: 42px;
+    font-weight: 900;
+    margin-bottom: 10px;
+  }
+
+  .winner-text {
+    font-size: 30px;
+    font-weight: 800;
+    margin-bottom: 10px;
+  }
+
+  .winner-score {
+    font-size: 38px;
+    font-weight: 900;
+    opacity: 0.95;
+  }
+
+  .confetti {
+    position: absolute;
+    top: -12px;
+    width: 12px;
+    height: 20px;
+    border-radius: 2px;
+    opacity: 0.9;
+    animation: drop 3.4s linear infinite;
+  }
+
+  .confetti:nth-child(1) { left: 8%; background: #fde047; animation-delay: 0s; }
+  .confetti:nth-child(2) { left: 18%; background: #22d3ee; animation-delay: 0.4s; }
+  .confetti:nth-child(3) { left: 31%; background: #f472b6; animation-delay: 0.8s; }
+  .confetti:nth-child(4) { left: 44%; background: #86efac; animation-delay: 1.2s; }
+  .confetti:nth-child(5) { left: 57%; background: #fca5a5; animation-delay: 1.6s; }
+  .confetti:nth-child(6) { left: 71%; background: #c4b5fd; animation-delay: 2s; }
+  .confetti:nth-child(7) { left: 84%; background: #67e8f9; animation-delay: 2.4s; }
+  .confetti:nth-child(8) { left: 93%; background: #facc15; animation-delay: 2.8s; }
+
+  @keyframes drop {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 0; }
+    10% { opacity: 0.95; }
+    100% { transform: translateY(120vh) rotate(360deg); opacity: 0; }
+  }
+
+  @media (max-width: 640px) {
+    .title { font-size: 18px; }
+    .score-val { font-size: 30px; }
+    .active-text { font-size: 18px; }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header">
+      <div>
+        <div class="title">شاشة المتسابق</div>
+        <div class="host" id="hostText">في انتظار بدء الجولة...</div>
+      </div>
+      <div class="pill" id="syncText">جاري المزامنة...</div>
+    </div>
+
+    <div class="card scores">
+      <div class="score-box">
+        <div class="score-name" id="team1Name">الفريق 1</div>
+        <div class="score-val score1" id="score1">0</div>
+      </div>
+      <div class="score-box">
+        <div class="score-name" id="team2Name">الفريق 2</div>
+        <div class="score-val score2" id="score2">0</div>
+      </div>
+    </div>
+
+    <div class="card wheel-card">
+      <div class="wheel-title">⏱ مؤقت عجلة الحظ</div>
+      <div class="wheel-timer" id="wheelTimer">10:00</div>
+    </div>
+
+    <div class="active-overlay" id="activeOverlay"></div>
+
+    <div class="card active-wrap" id="activeWrap">
+      <div class="active-head">
+        <div class="active-cat" id="activeCategory">اسم الفئة</div>
+        <div class="active-pts" id="activePoints">0 نقطة</div>
+        <div class="q-timer" id="qTimer">01:30</div>
+      </div>
+      <div class="active-text" id="activeQuestion">نص السؤال</div>
+    </div>
+
+    <div class="card">
+      <div class="status" id="statusText">يتم عرض الفئات والأسئلة المتاحة فقط.</div>
+      <div class="categories" id="categoriesRoot"></div>
+    </div>
+
+    <div class="winner-wrap" id="winnerWrap">
+      <span class="confetti"></span>
+      <span class="confetti"></span>
+      <span class="confetti"></span>
+      <span class="confetti"></span>
+      <span class="confetti"></span>
+      <span class="confetti"></span>
+      <span class="confetti"></span>
+      <span class="confetti"></span>
+      <div class="winner-content">
+        <div class="winner-title">🎉 مبروك 🎉</div>
+        <div class="winner-text" id="winnerText">الفائز يظهر هنا</div>
+        <div class="winner-score" id="winnerScore">0 - 0</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const GOOGLE_SHEETS_CONFIG = {
+  enabled: true,
+  webAppUrl: 'https://script.google.com/macros/s/AKfycbwVnsmWoMjLHbf04LhDSnptLJmQnAvsCz_S3WRxghM2HK4BvlPhEzih1nMof__kNxQq/exec'
+};
+
+let liveState = null;
+let pollHandle = null;
+let qTimerTickHandle = null;
+let wheelTimerTickHandle = null;
+let audioCtx = null;
+let lastPlayedSoundEventKey = '';
+const LIVE_FILTER = (() => {
+  const params = new URLSearchParams(window.location.search || '');
+  return {
+    sessionId: (params.get('sessionId') || '').trim(),
+    roundId: (params.get('roundId') || '').trim()
+  };
+})();
+
+function ensureAudioContext() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return null;
+  if (!audioCtx) {
+    audioCtx = new AudioCtx();
+  }
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume().catch(() => {});
+  }
+  return audioCtx;
+}
+
+function initAudioUnlock() {
+  const unlock = () => {
+    ensureAudioContext();
+    window.removeEventListener('click', unlock);
+    window.removeEventListener('touchstart', unlock);
+    window.removeEventListener('keydown', unlock);
+  };
+  window.addEventListener('click', unlock, { once: true });
+  window.addEventListener('touchstart', unlock, { once: true });
+  window.addEventListener('keydown', unlock, { once: true });
+}
+
+function playTone(startAt, duration, frequency, type = 'sine', volume = 0.08) {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+
+  osc.type = type;
+  osc.frequency.setValueAtTime(frequency, startAt);
+
+  gain.gain.setValueAtTime(0.0001, startAt);
+  gain.gain.linearRampToValueAtTime(volume, startAt + 0.02);
+  gain.gain.linearRampToValueAtTime(0.0001, startAt + duration);
+
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  osc.start(startAt);
+  osc.stop(startAt + duration + 0.03);
+}
+
+function playTimerSound(kind) {
+  const ctx = ensureAudioContext();
+  if (!ctx) return;
+  const t = ctx.currentTime + 0.01;
+
+  switch (kind) {
+    case 'main-start':
+      playTone(t, 0.16, 440, 'triangle', 0.08);
+      playTone(t + 0.2, 0.2, 523.25, 'triangle', 0.09);
+      break;
+    case 'main-end':
+      playTone(t, 0.28, 392, 'sawtooth', 0.1);
+      playTone(t + 0.24, 0.28, 311.13, 'sawtooth', 0.1);
+      playTone(t + 0.48, 0.34, 246.94, 'sawtooth', 0.11);
+      break;
+    case 'question-start':
+      playTone(t, 0.12, 880, 'sine', 0.07);
+      playTone(t + 0.14, 0.12, 988, 'sine', 0.08);
+      break;
+    case 'question-end':
+      playTone(t, 0.09, 1046.5, 'square', 0.09);
+      playTone(t + 0.12, 0.09, 1046.5, 'square', 0.09);
+      playTone(t + 0.24, 0.16, 784, 'square', 0.1);
+      break;
+    default:
+      break;
+  }
+}
+
+function handleTimerEventSounds(round) {
+  if (!round) return;
+
+  const eventType = String(round.eventType || '').trim();
+  if (!eventType) return;
+
+  const snap = round.updatedAt || round.timestamp || '';
+  const eventKey = `${round.roundId || ''}|${eventType}|${snap}`;
+  if (!eventKey || eventKey === lastPlayedSoundEventKey) return;
+
+  if (eventType === 'main-timer-start') {
+    playTimerSound('main-start');
+    lastPlayedSoundEventKey = eventKey;
+  } else if (eventType === 'main-timer-end') {
+    playTimerSound('main-end');
+    lastPlayedSoundEventKey = eventKey;
+  } else if (eventType === 'q-timer-start') {
+    playTimerSound('question-start');
+    lastPlayedSoundEventKey = eventKey;
+  } else if (eventType === 'q-timer-end') {
+    playTimerSound('question-end');
+    lastPlayedSoundEventKey = eventKey;
+  }
+}
+
+function buildUrl(api) {
+  const sep = GOOGLE_SHEETS_CONFIG.webAppUrl.includes('?') ? '&' : '?';
+  return `${GOOGLE_SHEETS_CONFIG.webAppUrl}${sep}api=${encodeURIComponent(api)}`;
+}
+
+async function callApi(api, payload = {}) {
+  const response = await fetch(buildUrl(api), {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ api, action: api, payload, ...payload })
+  });
+
+  if (!response.ok) throw new Error('فشل الاتصال');
+  const raw = await response.text();
+  const parsed = JSON.parse(raw);
+  if (parsed && parsed.ok === false) throw new Error(parsed.error || 'Apps Script Error');
+  return parsed;
+}
+
+function formatTime(sec) {
+  const s = Math.max(0, Number(sec || 0));
+  const m = Math.floor(s / 60).toString().padStart(2, '0');
+  const r = Math.floor(s % 60).toString().padStart(2, '0');
+  return `${m}:${r}`;
+}
+
+function parseIsoTimeMs(value) {
+  if (!value) return 0;
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function getSnapshotTimeMs(round) {
+  if (!round) return 0;
+  return parseIsoTimeMs(round.timestamp) || parseIsoTimeMs(round.updatedAt);
+}
+
+function answeredSet(answered) {
+  const set = new Set();
+  (answered || []).forEach(a => {
+    const ci = Number(a && (a.ci ?? a.catIdx));
+    const qi = Number(a && (a.qi ?? a.qIdx));
+    if (Number.isFinite(ci) && Number.isFinite(qi)) {
+      set.add(`${ci}-${qi}`);
+    }
+  });
+  return set;
+}
+
+function renderBoard(questions, answered) {
+  const root = document.getElementById('categoriesRoot');
+  const done = answeredSet(answered);
+
+  if (!Array.isArray(questions) || !questions.length) {
+    root.innerHTML = '<div class="status">لا توجد بيانات أسئلة متاحة الآن.</div>';
+    return;
+  }
+
+  let html = '';
+  questions.forEach((cat, ci) => {
+    html += `<div class="cat">`;
+    html += `<div class="cat-name">${cat.name || `فئة ${ci + 1}`}</div>`;
+    html += `<div class="grid">`;
+
+    (cat.questions || []).forEach((q, qi) => {
+      const key = `${ci}-${qi}`;
+      const isAnswered = done.has(key);
+      html += `<button class="pt ${isAnswered ? 'answered' : ''}" disabled>${Number(q.pts || 0)} نقطة</button>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  root.innerHTML = html;
+}
+
+function computeQuestionTimer(round) {
+  if (!round) return 0;
+
+  let rem = Number(round.qTimerRemaining || 0);
+  const running = !!round.qTimerRunning;
+  const snapshotAt = getSnapshotTimeMs(round);
+
+  if (running && snapshotAt > 0) {
+    const elapsed = Math.floor((Date.now() - snapshotAt) / 1000);
+    rem = Math.max(0, rem - Math.max(0, elapsed));
+  }
+
+  return rem;
+}
+
+function computeMainTimer(round) {
+  if (!round) return 600;
+
+  let rem = Number(round.mainTimerRemaining || 0);
+  const running = !!round.mainTimerRunning;
+  const snapshotAt = getSnapshotTimeMs(round);
+
+  if (running && snapshotAt > 0) {
+    const elapsed = Math.floor((Date.now() - snapshotAt) / 1000);
+    rem = Math.max(0, rem - Math.max(0, elapsed));
+  }
+
+  return rem;
+}
+
+function renderMainTimer(round) {
+  const timer = document.getElementById('wheelTimer');
+  const updateTimer = () => {
+    const rem = computeMainTimer(round);
+    timer.textContent = formatTime(rem);
+    timer.className = 'wheel-timer' + (rem <= 60 ? ' urgent' : '');
+  };
+
+  updateTimer();
+  if (wheelTimerTickHandle) clearInterval(wheelTimerTickHandle);
+  wheelTimerTickHandle = setInterval(updateTimer, 1000);
+}
+
+function renderActiveQuestion(round) {
+  const wrap = document.getElementById('activeWrap');
+  const overlay = document.getElementById('activeOverlay');
+  const cat = document.getElementById('activeCategory');
+  const pts = document.getElementById('activePoints');
+  const txt = document.getElementById('activeQuestion');
+  const timer = document.getElementById('qTimer');
+
+  const active = round && round.activeQuestion ? round.activeQuestion : null;
+  if (!active || !active.questionText) {
+    wrap.classList.remove('show');
+    overlay.classList.remove('show');
+    if (qTimerTickHandle) {
+      clearInterval(qTimerTickHandle);
+      qTimerTickHandle = null;
+    }
+    return;
+  }
+
+  wrap.classList.add('show');
+  overlay.classList.add('show');
+  cat.textContent = active.categoryName || 'سؤال مباشر';
+  pts.textContent = `${Number(active.pts || 0)} نقطة`;
+  txt.textContent = active.questionText || '';
+
+  const updateTimer = () => {
+    const rem = computeQuestionTimer(round);
+    timer.textContent = formatTime(rem);
+    timer.className = 'q-timer' + (rem <= 10 ? ' urgent' : '');
+  };
+
+  updateTimer();
+  if (qTimerTickHandle) clearInterval(qTimerTickHandle);
+  qTimerTickHandle = setInterval(updateTimer, 1000);
+}
+
+function renderLive(data) {
+  const syncText = document.getElementById('syncText');
+  const hostText = document.getElementById('hostText');
+  const team1Name = document.getElementById('team1Name');
+  const team2Name = document.getElementById('team2Name');
+  const score1 = document.getElementById('score1');
+  const score2 = document.getElementById('score2');
+
+  const hasRound = !!(data && data.hasRound && data.round);
+  const round = hasRound ? data.round : null;
+
+  if (round) {
+    handleTimerEventSounds(round);
+  }
+
+  if (!hasRound) {
+    syncText.textContent = 'في انتظار الجولة';
+    hostText.textContent = 'في انتظار الحكم لبدء الجولة...';
+    renderBoard(data && data.questions ? data.questions : [], []);
+    renderActiveQuestion(null);
+    renderWinner(null, data && data.questions ? data.questions : []);
+    renderMainTimer(null);
+    return;
+  }
+
+  syncText.textContent = 'مباشر';
+  hostText.textContent = round.hostName ? `الخادم: ${round.hostName}` : 'الجولة جارية';
+  team1Name.textContent = `الفريق ${round.team1Number || '1'}`;
+  team2Name.textContent = `الفريق ${round.team2Number || '2'}`;
+  score1.textContent = Number(round.score1 || 0);
+  score2.textContent = Number(round.score2 || 0);
+
+  renderBoard(data.questions || [], round.answered || []);
+  renderActiveQuestion(round);
+  renderWinner(round, data.questions || []);
+  renderMainTimer(round);
+}
+
+function renderWinner(round, questions) {
+  const wrap = document.getElementById('winnerWrap');
+  const winnerText = document.getElementById('winnerText');
+  const winnerScore = document.getElementById('winnerScore');
+
+  if (!round || !Array.isArray(questions) || !questions.length) {
+    wrap.classList.remove('show');
+    return;
+  }
+
+  const totalQuestions = questions.reduce((sum, cat) => sum + ((cat.questions || []).length), 0);
+  const answeredCount = Array.isArray(round.answered) ? round.answered.length : Number(round.answeredCount || 0);
+
+  if (answeredCount < totalQuestions || totalQuestions === 0) {
+    wrap.classList.remove('show');
+    return;
+  }
+
+  const s1 = Number(round.score1 || 0);
+  const s2 = Number(round.score2 || 0);
+  const team1Label = `الفريق ${round.team1Number || '1'}`;
+  const team2Label = `الفريق ${round.team2Number || '2'}`;
+
+  if (s1 > s2) winnerText.textContent = `🏆 ${team1Label} هو الفائز!`;
+  else if (s2 > s1) winnerText.textContent = `🏆 ${team2Label} هو الفائز!`;
+  else winnerText.textContent = '🤝 تعادل رائع بين الفريقين!';
+
+  winnerScore.textContent = `${s1} - ${s2}`;
+  wrap.classList.add('show');
+}
+
+async function pollLive() {
+  try {
+    const result = await callApi('getLiveState', LIVE_FILTER);
+    liveState = result && result.data ? result.data : null;
+    if (liveState) renderLive(liveState);
+  } catch (err) {
+    const syncText = document.getElementById('syncText');
+    syncText.textContent = 'فشل المزامنة';
+  }
+}
+
+function startPolling() {
+  const syncText = document.getElementById('syncText');
+  if (LIVE_FILTER.roundId) {
+    syncText.textContent = 'غرفة الجولة';
+  } else if (LIVE_FILTER.sessionId) {
+    syncText.textContent = 'غرفة المنافسة';
+  }
+  pollLive();
+  if (pollHandle) clearInterval(pollHandle);
+  pollHandle = setInterval(pollLive, 2000);
+}
+
+initAudioUnlock();
+startPolling();
+</script>
+</body>
+</html>
