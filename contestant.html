@@ -321,11 +321,6 @@
       </div>
     </div>
 
-    <div class="card wheel-card">
-      <div class="wheel-title">⏱ مؤقت عجلة الحظ</div>
-      <div class="wheel-timer" id="wheelTimer">10:00</div>
-    </div>
-
     <div class="active-overlay" id="activeOverlay"></div>
 
     <div class="card active-wrap" id="activeWrap">
@@ -368,7 +363,6 @@ const GOOGLE_SHEETS_CONFIG = {
 let liveState = null;
 let pollHandle = null;
 let qTimerTickHandle = null;
-let wheelTimerTickHandle = null;
 let audioCtx = null;
 let lastPlayedSoundEventKey = '';
 let serverClockOffsetMs = 0; // localTime - serverTime
@@ -597,19 +591,6 @@ function computeMainTimer(round) {
   return rem;
 }
 
-function renderMainTimer(round) {
-  const timer = document.getElementById('wheelTimer');
-  const updateTimer = () => {
-    const rem = computeMainTimer(round);
-    timer.textContent = formatTime(rem);
-    timer.className = 'wheel-timer' + (rem <= 60 ? ' urgent' : '');
-  };
-
-  updateTimer();
-  if (wheelTimerTickHandle) clearInterval(wheelTimerTickHandle);
-  wheelTimerTickHandle = setInterval(updateTimer, 1000);
-}
-
 function renderActiveQuestion(round) {
   const wrap = document.getElementById('activeWrap');
   const overlay = document.getElementById('activeOverlay');
@@ -667,7 +648,6 @@ function renderLive(data) {
     renderBoard(data && data.questions ? data.questions : [], []);
     renderActiveQuestion(null);
     renderWinner(null, data && data.questions ? data.questions : []);
-    renderMainTimer(null);
     return;
   }
 
@@ -681,7 +661,6 @@ function renderLive(data) {
   renderBoard(data.questions || [], round.answered || []);
   renderActiveQuestion(round);
   renderWinner(round, data.questions || []);
-  renderMainTimer(round);
 }
 
 function renderWinner(round, questions) {
