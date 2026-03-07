@@ -93,7 +93,24 @@
     line-height: 1;
   }
 
-  .wheel-timer.urgent { background: linear-gradient(135deg, #ef4444, var(--danger)); }
+  .wheel-timer.urgent {
+    background: linear-gradient(135deg, #ef4444, var(--danger));
+    animation: wheel-pulse 0.8s ease-in-out infinite;
+  }
+
+  .q-timer.urgent {
+    animation: q-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes wheel-pulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+    50% { transform: scale(1.08); box-shadow: 0 0 18px 6px rgba(239, 68, 68, 0.35); }
+  }
+
+  @keyframes q-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
 
   .scores {
     display: grid;
@@ -392,6 +409,11 @@
       <div class="pill" id="syncText">جاري المزامنة...</div>
     </div>
 
+    <div class="card wheel-card">
+      <div class="wheel-title">مؤقت عجلة الحظ</div>
+      <div class="wheel-timer" id="mainTimer">--:--</div>
+    </div>
+
     <div class="card scores">
       <div class="score-box">
         <div class="score-name" id="team1Name">الفريق 1</div>
@@ -673,6 +695,20 @@ function computeMainTimer(round) {
   return rem;
 }
 
+function renderMainTimer(round) {
+  const timer = document.getElementById('mainTimer');
+  if (!timer) return;
+  if (!round) {
+    timer.textContent = '--:--';
+    timer.className = 'wheel-timer';
+    return;
+  }
+
+  const rem = computeMainTimer(round);
+  timer.textContent = `${Math.floor(rem / 60).toString().padStart(2, '0')}:${(rem % 60).toString().padStart(2, '0')}`;
+  timer.className = 'wheel-timer' + (rem <= 10 ? ' urgent' : '');
+}
+
 function renderActiveQuestion(round) {
   const wrap = document.getElementById('activeWrap');
   const overlay = document.getElementById('activeOverlay');
@@ -742,10 +778,13 @@ function renderLive(data) {
     syncText.textContent = 'في انتظار الجولة';
     hostText.textContent = 'في انتظار الحكم لبدء الجولة...';
     renderBoard(data && data.questions ? data.questions : [], []);
+    renderMainTimer(null);
     renderActiveQuestion(null);
     renderWinner(null, data && data.questions ? data.questions : []);
     return;
   }
+
+  renderMainTimer(round);
 
   syncText.textContent = 'مباشر';
   hostText.textContent = round.hostName ? `الخادم: ${round.hostName}` : 'الجولة جارية';
