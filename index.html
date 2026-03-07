@@ -1612,9 +1612,9 @@ function renderQuestions(ci) {
     btn.className = `q-btn ${isAnswered ? 'answered' : isDouble ? 'double' : 'available'}`;
 
     if (isDouble && !isAnswered) {
-      btn.innerHTML = `<span class="double-label">2X</span><span class="pts-label">نقطة ${q.pts}</span><span class="time-label">⏱ ${Q_TIMER_DURATION}ث</span>`;
+      btn.innerHTML = `<span class="double-label">2X</span><span class="pts-label">نقطة ${q.pts}</span>`;
     } else {
-      btn.innerHTML = `<span class="pts-label">نقطة ${q.pts}</span><span class="time-label">⏱ ${Q_TIMER_DURATION}ث</span>`;
+      btn.innerHTML = `<span class="pts-label">نقطة ${q.pts}</span>`;
     }
 
     if (!isAnswered) {
