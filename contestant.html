@@ -143,6 +143,7 @@
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    flex-wrap: wrap;
     margin-bottom: 10px;
   }
 
@@ -352,8 +353,32 @@
 
   @media (max-width: 640px) {
     .title { font-size: 18px; }
-    .score-val { font-size: 30px; }
-    .active-text { font-size: 18px; }
+    .score-val { font-size: 28px; }
+    .active-text { font-size: 16px; }
+
+    .active-head {
+      gap: 8px;
+    }
+
+    .active-pts {
+      font-size: 14px;
+      padding: 8px 12px;
+    }
+
+    .double-extra {
+      gap: 4px;
+    }
+
+    .double-before,
+    .double-after {
+      font-size: 14px;
+      padding: 3px 8px;
+    }
+
+    .double-badge {
+      font-size: 12px;
+      padding: 3px 10px;
+    }
   }
 </style>
 </head>
