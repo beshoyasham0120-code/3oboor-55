@@ -1048,6 +1048,8 @@ let gameData = {
   ]
 };
 
+let serverClockOffsetMs = 0; // localTime - serverTime
+
 let state = {
   scores: [0, 0],
   answered: [], // [{catIdx, qIdx}]
@@ -1136,6 +1138,30 @@ function playTimerSound(kind) {
       break;
     default:
       break;
+  }
+}
+
+function parseIsoTimeMs(value) {
+  if (!value) return 0;
+  const ms = new Date(value).getTime();
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function getServerNowMs() {
+  return Date.now() - serverClockOffsetMs;
+}
+
+async function syncServerTime() {
+  try {
+    const payload = { sessionId: state.sessionId || '', roundId: state.roundId || '' };
+    const result = await callGoogleSheets('getLiveState', payload, 'POST');
+    const serverTime = result && result.data && result.data.serverTime;
+    if (serverTime) {
+      serverClockOffsetMs = Date.now() - parseIsoTimeMs(serverTime);
+    }
+    return serverTime;
+  } catch (err) {
+    return null;
   }
 }
 
@@ -1764,15 +1790,25 @@ function updateQTimerDisplay() {
   }
 }
 
-function startQTimer() {
+function computeQRemaining() {
+  if (!qTimerState.startedAt) return qTimerState.remaining;
+  const startedMs = parseIsoTimeMs(qTimerState.startedAt);
+  const elapsed = Math.floor((getServerNowMs() - startedMs) / 1000);
+  return Math.max(0, Q_TIMER_DURATION - elapsed);
+}
+
+async function startQTimer() {
   if (qTimerState.running) return;
   if (qTimerState.remaining <= 0) return;
   qTimerState.running = true;
-  qTimerState.startedAt = new Date().toISOString();
+
+  const serverTime = await syncServerTime();
+  qTimerState.startedAt = serverTime || new Date().toISOString();
+
   playTimerSound('question-start');
   saveRoundState('q-timer-start');
   qTimerState.interval = setInterval(() => {
-    qTimerState.remaining--;
+    qTimerState.remaining = computeQRemaining();
     updateQTimerDisplay();
     if (qTimerState.remaining <= 0) {
       stopQTimer();
@@ -1806,7 +1842,15 @@ function stopQTimer() {
 }
 
 // ===================== TIMER =====================
+function computeMainRemaining() {
+  if (!state.timer.startedAt) return state.timer.remaining;
+  const startedMs = parseIsoTimeMs(state.timer.startedAt);
+  const elapsed = Math.floor((getServerNowMs() - startedMs) / 1000);
+  return Math.max(0, TIMER_DURATION - elapsed);
+}
+
 function updateTimerDisplay() {
+  state.timer.remaining = computeMainRemaining();
   const rem = state.timer.remaining;
   const m = Math.floor(rem / 60).toString().padStart(2, '0');
   const s = (rem % 60).toString().padStart(2, '0');
@@ -1815,17 +1859,20 @@ function updateTimerDisplay() {
   display.className = 'timer-display' + (rem <= 10 && rem > 0 ? ' urgent' : '');
 }
 
-function startTimer() {
+async function startTimer() {
   if (state.timer.running) return;
   if (state.timer.remaining <= 0) { resetTimer(); return; }
   state.timer.running = true;
-  state.timer.startedAt = new Date().toISOString();
+
+  const serverTime = await syncServerTime();
+  state.timer.startedAt = serverTime || new Date().toISOString();
+
   document.getElementById('statusDot').className = 'status-dot running';
   document.getElementById('statusText').textContent = 'يعمل';
   playTimerSound('main-start');
   saveRoundState('main-timer-start');
+
   state.timer.interval = setInterval(() => {
-    state.timer.remaining--;
     updateTimerDisplay();
     if (state.timer.remaining <= 0) {
       stopTimer();
@@ -1839,6 +1886,7 @@ function startTimer() {
 
 function pauseTimer() {
   stopTimer();
+  updateTimerDisplay();
   document.getElementById('statusText').textContent = 'متوقف';
   saveRoundState('main-timer-pause');
 }
@@ -1853,6 +1901,7 @@ function stopTimer() {
 function resetTimer() {
   stopTimer();
   state.timer.remaining = TIMER_DURATION;
+  state.timer.startedAt = null;
   updateTimerDisplay();
   document.getElementById('statusText').textContent = 'متوقف';
   saveRoundState('main-timer-reset');
@@ -1966,6 +2015,9 @@ if (isDirectEditMode()) {
   window.location.href = 'questions-editor.html';
 } else {
   applyMatchSetupToUI();
+  // Keep local clock aligned with server time (helps keep timers in sync)
+  syncServerTime();
+  setInterval(syncServerTime, 15000);
 }
 </script>
 </body>

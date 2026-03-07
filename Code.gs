@@ -206,6 +206,8 @@ function saveRoundState_(payload) {
   if (!roundId) throw new Error('roundId is required for saveRoundState');
 
   const nowIso = new Date().toISOString();
+  const eventType = valueOr_(payload.eventType, 'state-update');
+
   const update = {
     roundId: roundId,
     sessionId: valueOr_(payload.sessionId, ''),
@@ -218,14 +220,14 @@ function saveRoundState_(payload) {
     doubleSelected: toBool_(payload.doubleSelected),
     mainTimerRemaining: toNumber_(payload.mainTimerRemaining, 90),
     mainTimerRunning: toBool_(payload.mainTimerRunning),
-    mainTimerStartedAt: valueOr_(payload.mainTimerStartedAt, ''),
-    eventType: valueOr_(payload.eventType, 'state-update'),
+    mainTimerStartedAt: eventType === 'main-timer-start' ? nowIso : valueOr_(payload.mainTimerStartedAt, ''),
+    eventType: eventType,
     timestamp: valueOr_(payload.timestamp, nowIso),
     answeredJson: valueOr_(payload.answeredJson, '[]'),
     activeQuestionJson: valueOr_(payload.activeQuestionJson, ''),
     qTimerRemaining: toNumber_(payload.qTimerRemaining, 90),
     qTimerRunning: toBool_(payload.qTimerRunning),
-    qTimerStartedAt: valueOr_(payload.qTimerStartedAt, ''),
+    qTimerStartedAt: eventType === 'q-timer-start' ? nowIso : valueOr_(payload.qTimerStartedAt, ''),
     extraJson: valueOr_(payload.extraJson, '{}'),
     updatedAt: nowIso
   };
